@@ -16,7 +16,8 @@
 #define MM_PAGING
 #define PAGING_MAX_MMSWP 4 /* max number of supported swapped space */
 #define PAGING_MAX_SYMTBL_SZ 30
-#define BUDDY_MAX_ORDER 5 //32 page 
+
+#define BUDDY_MAX_ORDER 16 //65536 page = 256MB
 /* 
  * @bksysnet: in long address mode of 64bit or original 32bit
  * the address type need to be redefined

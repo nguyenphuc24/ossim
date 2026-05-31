@@ -549,6 +549,12 @@ int libkmem_malloc(struct pcb_t * caller, uint32_t size, uint32_t reg_index)
 struct buddy_block *buddy_free_lists[BUDDY_MAX_ORDER + 1] = {NULL};
 int buddy_initialized = 0;
 
+
+#ifdef MM64
+static addr_t slab_brk = VMEMMAP_BASE;
+#endif
+
+
 void init_kmem_pool(struct pcb_t *caller) {
     if (buddy_initialized) return;
     buddy_initialized = 1;
@@ -562,20 +568,24 @@ void init_kmem_pool(struct pcb_t *caller) {
     int total_pages = 1 << BUDDY_MAX_ORDER;
     struct vm_rg_struct ret_rg;
     
+    if(KMALLOC_BASE + (total_pages) * page_sz > KMALLOC_END) return -1;
     // Request a large block mapping from Kernel base
-    if (vm_map_kernel(caller, KERNEL_BASE, KERNEL_BASE + (total_pages * page_sz), 
-                      KERNEL_BASE, total_pages, &ret_rg) < 0) {
+
+    if (vm_map_kernel(caller, KMALLOC_BASE, KMALLOC_BASE + (total_pages * page_sz), 
+                      KMALLOC_BASE, total_pages, &ret_rg) < 0) {
         return; 
     }
 
     struct buddy_block *root = malloc(sizeof(struct buddy_block));
-    root->addr = KERNEL_BASE;
+    root->addr = KMALLOC_BASE;
     root->order = BUDDY_MAX_ORDER;
     root->is_free = 1;
     root->next_free = NULL;
 
     buddy_free_lists[BUDDY_MAX_ORDER] = root;
 }
+
+
 
 /*kmalloc - alloc region memory in kmem
  *@caller:        caller
@@ -673,8 +683,14 @@ int libkmem_cache_pool_create(struct pcb_t *caller, uint32_t size, uint32_t alig
 #else
   int page_sz = PAGING_PAGESZ;
 #endif
+  if (slab_brk + page_sz > VMEMMAP_END) return -1; 
 
-  if (__kmalloc(caller, -1, -1, page_sz, &slab_addr) == -1) return -1;
+  struct vm_rg_struct ret_rg;
+  if (vm_map_kernel(caller, slab_brk, slab_brk + page_sz, slab_brk, 1, &ret_rg) < 0) {
+      return -1; 
+  }
+  slab_addr = slab_brk;
+  slab_brk += page_sz; 
 
   struct slab_struct *slab = malloc(sizeof(struct slab_struct));
   slab->start_addr = slab_addr;
@@ -751,7 +767,12 @@ addr_t __kmem_cache_alloc(struct pcb_t *caller, int vmaid, int rgid, int cache_p
       int page_sz = PAGING_PAGESZ;
 #endif
       addr_t slab_addr;
-      if (__kmalloc(caller, -1, -1, page_sz, &slab_addr) == -1) return -1;
+      if(slab_brk + page_sz > VMEMMAP_END) return -1;
+
+      struct vm_rg_struct ret_rg;
+      if(vm_map_kernel(caller, slab_brk, slab_brk + page_sz, slab_brk, 1, &ret_rg) < 0) return -1;
+      slab_addr = slab_brk;
+      slab_brk += page_sz;
 
       slab = malloc(sizeof(struct slab_struct));
       slab->start_addr = slab_addr;

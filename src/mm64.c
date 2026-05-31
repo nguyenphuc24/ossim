@@ -549,11 +549,16 @@ addr_t vm_map_kernel(struct pcb_t *caller, addr_t astart, addr_t aend, addr_t ma
 
   //ret_rg->rg_start = KERNEL_BASE + ((addr_t)fpit->fpn * PAGING64_PAGESZ);
   ret_rg->rg_start = mapstart;
+#if defined(MM64)
   ret_rg->rg_end = ret_rg->rg_start + (addr_t)incpgnum * PAGING64_PAGESZ;
+#else
+  ret_rg->rg_end = ret_rg->rg_start + (addr_t)incpgnum * PAGING_PAGESZ;
+#endif
   ret_rg->mode_bit = 0; // kernel memory region
 
   addr_t kva_start = ret_rg->rg_start;
-
+#if defined(MM64)
+  
   for (int i = 0; i < incpgnum; i++)
   {
     if (fpit == NULL)
@@ -579,7 +584,7 @@ addr_t vm_map_kernel(struct pcb_t *caller, addr_t astart, addr_t aend, addr_t ma
 
     fpit = fpit->fp_next;
   }
-
+#endif
   return kva_start;
 }
 
