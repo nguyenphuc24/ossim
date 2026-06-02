@@ -487,8 +487,8 @@ int init_mm(struct mm_struct *mm, struct pcb_t *caller)
   /* By default the owner comes with at least one vma */ 
   struct vm_area_struct *vma_text = malloc(sizeof(struct vm_area_struct));
   vma_text->vm_id    = 0;
-  vma_text->vm_start = 0x0000000000001000ULL;
-  vma_text->vm_end   = 0x0000000000FFFFFFULL;
+  vma_text->vm_start = VMA_TEXT_BASE;
+  vma_text->vm_end   = VMA_TEXT_END;
   vma_text->sbrk     = vma_text->vm_start;
   vma_text->vm_mm    = mm;
   vma_text->vm_freerg_list = NULL;
@@ -497,8 +497,8 @@ int init_mm(struct mm_struct *mm, struct pcb_t *caller)
 
   struct vm_area_struct *vma_heap = malloc(sizeof(struct vm_area_struct));
   vma_heap->vm_id    = 1;
-  vma_heap->vm_start = 0x0000000020000000ULL;
-  vma_heap->vm_end   = 0x01FEFFFFFFFFFFFFULL;
+  vma_heap->vm_start = VMA_HEAP_BASE;
+  vma_heap->vm_end   = VMA_HEAP_END;
   vma_heap->sbrk     = vma_heap->vm_start;
   vma_heap->vm_mm    = mm;
   vma_heap->vm_freerg_list = NULL;
@@ -507,8 +507,8 @@ int init_mm(struct mm_struct *mm, struct pcb_t *caller)
 
   struct vm_area_struct *vma_stack = malloc(sizeof(struct vm_area_struct));
   vma_stack->vm_id    = 2;
-  vma_stack->vm_start = 0x01FFFC0000000000ULL;
-  vma_stack->vm_end   = 0x01FFFFFFFFFFFFFFULL;
+  vma_stack->vm_start = VMA_STACK_BASE;
+  vma_stack->vm_end   = VMA_STACK_END;
   vma_stack->sbrk     = vma_stack->vm_start;
   vma_stack->vm_mm    = mm;
   vma_stack->vm_freerg_list = NULL;
